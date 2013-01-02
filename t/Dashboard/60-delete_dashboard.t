@@ -4,18 +4,16 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-
 use Data::Validate::Type;
 use Test::Exception;
 use Test::More;
-
 use WebService::DataDog;
 
 
 eval 'use DataDogConfig';
 $@
 	? plan( skip_all => 'Local connection information for DataDog required to run tests.' )
-	: plan( tests => 7 );
+	: plan( tests => 8 );
 
 my $config = DataDogConfig->new();
 
@@ -32,38 +30,49 @@ ok(
 	defined( $dashboard_obj ),
 	'Create a new WebService::DataDog::Dashboard object.',
 );
+
 my $response;
 
-lives_ok(
+throws_ok(
 	sub
 	{
-		$response = $dashboard_obj->get_all_dashboards();
+		$response = $dashboard_obj->delete_dashboard( id => "abc" );
 	},
-	'Request list of all dashboards.',
+	qr/id must be a number/,
+	'Dies on invalid dash id.',
+);
+
+throws_ok(
+	sub
+	{
+		$response = $dashboard_obj->delete_dashboard( id => "123" );
+	},
+	qr/Error 404/,
+	'Dies on unknown dash id.',
 );
 
 ok(
-	defined( $response ),
-	'Response was received.'
+	open( FILE, 'webservice-datadog-dashboard-dashid.tmp'),
+	'Open temp file to read dashboard id'
 );
+
+my $dash_id;
 
 ok(
-	Data::Validate::Type::is_arrayref( $response ),
-	'Response is an arrayref.',
+	$dash_id = do { local $/; <FILE> },
+	'Read in dashboard id'
 );
-
-ok(
-	open( FILE, '>', 'webservice-datadog-dashboard-dashid.tmp'),
-	'Open temp file to store dashboard ids'
-);
-
-# Print first ID number to a text file, to use in other tests
-my $first_dash_id = defined $response->[0] && $response->[0]->{'id'}
- ? $response->[0]->{'id'}
- : '';
-print FILE $first_dash_id;
 
 ok(
 	close FILE,
 	'Close temp file'
+);
+
+
+lives_ok(
+	sub
+	{
+		$dashboard_obj->delete_dashboard( id => $dash_id );
+	},
+	'Delete specified dashboard'
 );

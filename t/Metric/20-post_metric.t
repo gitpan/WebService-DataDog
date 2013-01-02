@@ -5,7 +5,6 @@ use warnings;
 
 use Data::Dumper;
 
-use Data::Validate::Type;
 use Test::Exception;
 use Test::More;
 
@@ -81,7 +80,7 @@ throws_ok(
 			value       => 42,
 		);
 	},
-	qr/Invalid metric name/,
+	qr/nvalid metric name/,
 	'post metric - dies with metric name invalid.',
 );
 
@@ -156,7 +155,7 @@ throws_ok(
 			tags  => {},
 		);
 	},
-	qr/Tag.*Must be an arrayref/,
+	qr/nvalid 'tag'.*Must be an arrayref/,
 	'post metric - dies with invalid tag list, not an arrayref.',
 );
 

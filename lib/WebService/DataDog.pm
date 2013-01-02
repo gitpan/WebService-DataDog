@@ -9,7 +9,7 @@ use HTTP::Request qw();
 use JSON qw();
 use Class::Load qw();
 use Carp qw( carp croak );
-
+use Data::Validate::Type qw();
 
 
 our $API_ENDPOINT = "https://app.datadoghq.com/api/v1/";
@@ -22,11 +22,11 @@ WebService::DataDog - Interface to DataDog's REST API.
 
 =head1 VERSION
 
-Version 0.2.0
+Version 0.3.0
 
 =cut
 
-our $VERSION = '0.2.0';
+our $VERSION = '0.3.0';
 
 
 =head1 SYNOPSIS
@@ -75,6 +75,46 @@ application key.
 		graphs      => $graphs,
 	);
 	
+	# For event functions, first build an event object
+	my $event = $datadog->build('Event');
+	
+	# To search the event stream
+	my $event_list = $event->search(
+		start     => $start_time,
+		end       => $end_time, # Optional - default 'now'
+		priority  => $priority, # Optional - low|normal
+		sources   => $sources,  # Optional - list of sources. Ex: Datadog, Github, Pingdom, Webmetrics
+		tags      => $tag_list, # Optional - list of tags associated with the event
+	);
+	
+	# Find all events in the last 48 hours.
+	my $event_list = $event->search(
+		start => time() - ( 48 * 60 * 60 ),
+	);
+	
+	# To get all details of a specific event
+	my $event_data = $event->get_event( id => $event_id );
+	
+	# To post a new event to the event stream
+	$event->post_event(
+		title            => $event_title,
+		text             => $event_text,  # Body/Description of the event.
+		date_happened    => $timestamp,   # Optional, default "now"
+		priority         => $priority,    # Optional. normal|low
+		related_event_id => $event_id,    # Optional, id of aggregate event
+		tags             => $tag_list,    # Optional - tags to apply to event (easy to search by)
+		alert_type       => $alert_type,  # Optional. error|warning|info|success
+		aggregation_key  => $agg_key,     # Optional. Arbitrary string to use for aggregation.
+		source_type_name => $source_type, # Optional. nagios|hudson|jenkins|user|my apps|feed|chef|puppet|git|bitbucket|fabric|capistrano
+	);
+	
+	# Submit a user event, with timestamp of `now`.
+	$event->post_event(
+		title            => 'Test event',
+		text             => 'Testing posting to event stream',
+		source_type_name => 'user',
+	);
+	
 =cut
 
 
@@ -107,7 +147,7 @@ sub new
 	# Check for mandatory parameters
 	foreach my $arg ( qw( api_key application_key ) )
 	{
-		croak "Argument '$arg' is needed to create the WebService::DataDog object"
+		croak "Argument '$arg' is required to create the WebService::DataDog object"
 			if !defined( $args{$arg} ) || ( $args{$arg} eq '' );
 	}
 	
@@ -251,7 +291,14 @@ sub _send_request ## no critic qw( Subroutines::ProhibitUnusedPrivateSubroutines
 	my $method = $args{'method'};
 	
 	# Add authentication info
-	$url .= '?api_key=' . $self->{'api_key'} . '&application_key=' . $self->{'application_key'};
+	if ( $url =~ /events\?/ )  #Events search endpoint will already have URL params...
+	{
+		$url .= '&api_key=' . $self->{'api_key'} . '&application_key=' . $self->{'application_key'};
+	}
+	else
+	{
+		$url .= '?api_key=' . $self->{'api_key'} . '&application_key=' . $self->{'application_key'};
+	}
 	
 	my $request;
 	if ( $method eq 'GET' ) ## no critic qw( ControlStructures::ProhibitCascadingIfElse )
@@ -353,16 +400,13 @@ L<http://search.cpan.org/dist/WebService-DataDog/>
 
 =head1 ACKNOWLEDGEMENTS
 
-Thanks to ThinkGeek (L<http://www.thinkgeek.com/>) and its corporate overlords
-at Geeknet (L<http://www.geek.net/>), for footing the bill while I write code
-for them!
 Special thanks for architecture advice from fellow ThinkGeek CPAN author Guillaume
 Aubert L<http://search.cpan.org/~aubertg/> as well as fellow ThinkGeek CPAN author
 Kate Kirby L<http://search.cpan.org/~kate/>
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright 2012 Jennifer Pinkham.
+Copyright 2013 Jennifer Pinkham.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the Artistic License.
