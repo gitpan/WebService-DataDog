@@ -22,11 +22,11 @@ WebService::DataDog - Interface to DataDog's REST API.
 
 =head1 VERSION
 
-Version 0.3.0
+Version 0.3.1
 
 =cut
 
-our $VERSION = '0.3.0';
+our $VERSION = '0.3.1';
 
 
 =head1 SYNOPSIS
@@ -65,6 +65,16 @@ application key.
 	
 	# For dashboard functions, first build a dashboard object
 	my $dashboard = $datadog->build('Dashboard');
+	
+	# Create a new dashboard
+	my $dashboard_id = $dashboard->create(
+		title       => $dash_title,
+		description => $dash_description,
+		graphs      => $graphs,
+	);
+	
+	# Delete a user-created dashboard that you don't need anymore
+	$dashboard->delete_dashboard( id => $dash_id );
 	
 	# To make any changes to an existing user-created dashboard:
 	# Specify dash_id and any combination of title, description, graphs
@@ -136,7 +146,24 @@ DataDog's API
 
 Creates a new object to communicate with DataDog.
 
-The 'verbose' parameter is optional and defaults to not verbose.
+Parameters:
+
+=over 4
+
+=item * api_key
+
+DataDog API key. Found at L<https://app.datadoghq.com/account/settings>
+
+=item * application_key
+
+DataDog application key.  Multiple keys can be generated per account.  Generate/View existing at
+L<https://app.datadoghq.com/account/settings>
+
+=item * verbose
+
+Optional.  Set to 1 to see debugging output of request/response interaction with DataDog service.
+
+=back
 
 =cut
 
@@ -156,11 +183,10 @@ sub new
 		{
 			api_key         => $args{'api_key'},
 			application_key => $args{'application_key'},
+			verbose         => defined $args{'verbose'} ? $args{'verbose'} : 0,
 		},
 		$class,
 	);
-	
-	$self->verbose( $args{'verbose'} );
 	
 	return $self;
 }
@@ -399,6 +425,9 @@ L<http://search.cpan.org/dist/WebService-DataDog/>
 
 
 =head1 ACKNOWLEDGEMENTS
+
+Thanks to ThinkGeek (<http://www.thinkgeek.com/>) and its corporate overlords at
+Geeknet (<http://www.geek.net/>), for footing the bill while I write code for them!
 
 Special thanks for architecture advice from fellow ThinkGeek CPAN author Guillaume
 Aubert L<http://search.cpan.org/~aubertg/> as well as fellow ThinkGeek CPAN author
