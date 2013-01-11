@@ -27,17 +27,26 @@ DataDog-provided Ruby and Python API libraries have.
 
 
 Features coming soon (not necessarily in this order):
+
+* new module 'Alert'
+  - create alerts
+  - modify alerts
+  - retrieve details on one/all alerts
+  - delete an alert
+  - mute/unmute all alerts
+
+* Capture 404 errors on certain actions and show "invalid/unknown $object id" instead
+
 * new module 'Tag'
   - getting all tags; getting tags on specified host
   - adding/updating tags for a specific host
   - removing host tags
-* new module 'Alert'
-  - create alerts
-  - retrieve details on one/all alerts
-  - delete an alert
-  - mute/unmute all alerts
+
 * new module 'Comment'
-  - created/edit/delete 
+  - create
+  - edit
+  - delete 
+
 * new module 'Search'
 
 
