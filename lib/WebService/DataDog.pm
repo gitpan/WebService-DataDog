@@ -22,11 +22,11 @@ WebService::DataDog - Interface to DataDog's REST API.
 
 =head1 VERSION
 
-Version 0.5.0
+Version 0.6.0
 
 =cut
 
-our $VERSION = '0.5.0';
+our $VERSION = '0.6.0';
 
 
 =head1 SYNOPSIS
@@ -124,6 +124,38 @@ application key.
 		text             => 'Testing posting to event stream',
 		source_type_name => 'user',
 	);
+	
+	# For alert functions, first build an alert object
+	my $alert = $datadog->build('Alert');
+	
+	# Get list, with details, of all alerts
+	my $alert_list = $alert->retrieve_all();
+	
+	# Create a new alert
+	my $alert_id = $alert->create(
+		query    => $query,      # Metric query to alert on
+		name     => $alert_name, # Optional. default=dynamic, based on query
+		message  => $message,    # Optional. default=None
+		silenced => $boolean,    # Optional. default=0
+	);
+
+	# Retrieve details on a specific alert
+	my $alert_data = $alert->retrieve( id => $alert_id );
+	
+	# Update an existing alert
+	$alert->update(
+		id       => $alert_id,   # ID of alert to modify
+		query    => $query,      # Metric query to alert on
+		name     => $alert_name, # Optional.
+		message  => $message,    # Optional.
+		silenced => $boolean,    # Optional.
+	);
+	
+	# Mute all alerts at once. Example usage: system maintenance.
+	$alert->mute_all();
+	
+	# Unmute all alerts at once. Example usage: completed system maintenance.
+	$alert->unmute_all();
 	
 =cut
 
@@ -336,25 +368,13 @@ sub _send_request ## no critic qw( Subroutines::ProhibitUnusedPrivateSubroutines
 	}
 	
 	my $request;
-	if ( $method eq 'GET' ) ## no critic qw( ControlStructures::ProhibitCascadingIfElse )
+	if ( $method =~ /\A(?:GET|POST|DELETE|PUT)\z/x )
 	{
-		$request = HTTP::Request->new( GET => $url );
-	}
-	elsif ( $method eq 'POST' )
-	{
-		$request = HTTP::Request->new( POST => $url );
-	}
-	elsif ( $method eq 'DELETE' )
-	{
-		$request = HTTP::Request->new( DELETE => $url );
-	}
-	elsif ( $method eq 'PUT' )
-	{
-		$request = HTTP::Request->new( PUT => $url );
+		$request = HTTP::Request->new( $method => $url );
 	}
 	else
 	{
-		croak ">" . $args{'command'} . "< is an unknown command. Not sending request.";
+		croak "The method >$method< is not supported. Not sending request.";
 	}
 	
 	carp "Sending request to URL >" . ( defined( $url ) ? $url : '' ) . "< via method >$method<"
@@ -379,8 +399,13 @@ sub _send_request ## no critic qw( Subroutines::ProhibitUnusedPrivateSubroutines
 
 	carp "Response >" . ( defined( $response ) ? $response->content() : '' ) . "<"
 		if $verbose;
-
-	my $json_out = JSON::decode_json( $response->content() );
+	
+	# Try to parse JSON response, only if one was received.
+	# Some functions, such as Dashboard::delete(), Alert::mute_all, Alert::unmute_all()
+	# return nothing when successful, so there won't be anything to parse.
+	my $json_out = defined( $response ) && defined( $response->content() ) && $response->content() ne ''
+		? JSON::decode_json( $response->content() )
+		: '';
 	
 	carp "JSON Response >" . ( defined( $json_out ) ? Dumper($json_out) : '' ) . "<"
 		if $verbose;

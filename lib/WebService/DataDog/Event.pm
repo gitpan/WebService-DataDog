@@ -14,14 +14,15 @@ WebService::DataDog::Event - Interface to Event functions in DataDog's API.
 
 =head1 VERSION
 
-Version 0.5.0
+Version 0.6.0
 
 =cut
 
-our $VERSION = '0.5.0';
+our $VERSION = '0.6.0';
 
 
 =head1 SYNOPSIS
+
 This module allows you interact with the Event endpoint of the DataDog API.
 
 Per DataDog: "The events service allows you to programatically post events to
@@ -31,6 +32,7 @@ the stream and fetch events from the stream."
 =head1 METHODS
 
 =head2 search()
+
 Search the event stream using specified parameters.
 
 	my $event = $datadog->build('Event');
@@ -337,6 +339,7 @@ sub create
 =head2 _search_error_checks()
 
 Error checking for search()
+
 =cut
 
 sub _search_error_checks
@@ -389,7 +392,6 @@ sub _search_error_checks
 	
 	return;
 }
-
 
 
 =head2 _create_error_checks()
@@ -448,14 +450,14 @@ sub _create_error_checks
 	if ( defined( $args{'alert_type'} ) )
 	{
 		croak "ERROR - invalid 'alert_type' >" . $args{'alert_type'} . "<. Allowed values: error, warning, info, success"
-			unless $args{'alert_type'} =~ /error|warning|info|success/;
+			unless $args{'alert_type'} =~ /^error|warning|info|success$/;
 	}
 	
 	# Check that 'source_type_name' is valid
 	if ( defined( $args{'source_type_name'} ) )
 	{
 		croak "ERROR - invalid 'source_type_name' >" . $args{'source_type_name'} . "<. Allowed values: nagios|hudson|jenkins|user|my apps|feed|chef|puppet|git|bitbucket|fabric|capistrano"
-			unless $args{'source_type_name'} =~ /nagios|hudson|jenkins|user|my apps|feed|chef|puppet|git|bitbucket|fabric|capistrano/; ## no critic qw( RegularExpressions::RequireExtendedFormatting RegularExpressions::ProhibitComplexRegexes )
+			unless $args{'source_type_name'} =~ /^nagios|hudson|jenkins|user|my apps|feed|chef|puppet|git|bitbucket|fabric|capistrano$/; ## no critic qw( RegularExpressions::RequireExtendedFormatting RegularExpressions::ProhibitComplexRegexes )
 	}
 	
 	return;
