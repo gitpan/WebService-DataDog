@@ -14,11 +14,11 @@ WebService::DataDog::Metric - Interface to Metric functions in DataDog's API.
 
 =head1 VERSION
 
-Version 0.6.0
+Version 0.7.0
 
 =cut
 
-our $VERSION = '0.6.0';
+our $VERSION = '0.7.0';
 
 
 =head1 METHODS
@@ -258,7 +258,7 @@ sub _error_checks
 		# is valid
 		if ( !Data::Validate::Type::is_arrayref( $args{'tags'} ) )
 		{
-			croak "ERROR - invalid 'tag' value. Must be an arrayref.";
+			croak "ERROR - invalid 'tags' value. Must be an arrayref.";
 		}
 		
 		foreach my $tag ( @{ $args{'tags'} } )
