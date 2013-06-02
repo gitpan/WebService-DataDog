@@ -1,4 +1,5 @@
 WebService-DataDog
+====================
 
 This module allows you to interact with DataDog (http://http://www.datadoghq.com/),
 a service that will "Capture metrics and events, then graph, filter, and search
@@ -18,22 +19,11 @@ For help with graph definitions (when creating/updating dashboards), please visi
 http://docs.datadoghq.com/graphing/  and
 http://help.datadoghq.com/kb/graphs-dashboards/graph-primer
 
+Build status: [![Build Status](https://travis-ci.org/jpinkham/webservice-datadog.png)](https://travis-ci.org/jpinkham/webservice-datadog)
 
-**NOTE: This is in the development stage and has slightly reduced functionality.
-I intend to continue updating, eventually adding all functionality that
-DataDog-provided Ruby and Python API libraries have.
-
-
-Features coming soon (not necessarily in this order):
-
-* Capture 404 errors on certain actions and show "invalid/unknown $object id" instead
-
-* new module 'Comment'
-  - create
-  - edit
-  - delete 
 
 INSTALLATION
+-------------
 
 To install this module, run the following commands:
 
@@ -42,7 +32,42 @@ To install this module, run the following commands:
 	./Build test
 	./Build install
 
+
+NOTES
+------
+
+ * WebService::DataDog::Alert, in retrieve() and update():
+A 404 response typically indicates an incorrect alert id was specified
+
+ * WebService::DataDog::Comment, in create() and update():
+The 'handle' parameter must specify a username on the "team" (https://app.datadoghq.com/account/team)
+associated with your account, otherwise your update will fail with a 400 or 404
+error.
+	
+ * WebService::DataDog::Dashboard, in delete():
+You cannot remove system-generated or integration dashboards.
+
+ * WebService::DataDog::Event, in retrieve():
+Receiving a 404 response likely means the requested event id does not exist
+
+ * WebService::DataDog::Metric, in emit():
+Only metrics of type 'gauge' and type 'counter' are supported. You must use a
+dogstatsd client such as Net::Dogstatsd to post metrics of other types
+(ex: 'timer', 'histogram', 'sets' or use  increment() or decrement() on a counter).
+The primary advantage of the API vs dogstatsd for posting metrics: API supports
+specifying a timestamp, thereby allowing posting metrics from the past.
+
+ * WebService::DataDog::Tag, in add(), retrieve(), update():
+A 404 response typically indicates you specified an incorrect/unknown host name/id.
+Also, all methods, except retrieve_all(), operate on a per-host basis rather than
+on a per-tag basis. You cannot rename a tag or delete a tag from all hosts,
+through the DataDog API. *Tags containing two colons will not be allowed because
+it causes confusion in the graphing interface, which "drills down" based on
+key:value pairs (using a single colon).
+
+
 SUPPORT AND DOCUMENTATION
+-------------------------
 
 After installing, you can find documentation for this module with the
 perldoc command.
@@ -65,7 +90,7 @@ You can also look for information at:
 
 
 LICENSE AND COPYRIGHT
-
+---------------------
 Copyright (C) 2013 Jennifer Pinkham
 
 This program is free software; you can redistribute it and/or modify it
